@@ -1,5 +1,6 @@
 from django.test import TestCase, Client
 
+
 class HelloWorldTestCase(TestCase):
     def setUp(self):
         self.client = Client()
