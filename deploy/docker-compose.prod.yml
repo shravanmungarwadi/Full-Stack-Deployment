@@ -1,18 +1,16 @@
 services:
   backend:
-    image: shravanvm/devops-backend:latest
+    image: ${DOCKERHUB_USERNAME}/devops-backend:latest
     container_name: backend
     restart: always
     environment:
-      # Adjust these to match your backend (examples)
-      DEBUG: "0"
-      ALLOWED_HOSTS: "*"
-    command: python manage.py runserver 0.0.0.0:8000
+      - DEBUG=False
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
     networks:
       - appnet
 
   frontend:
-    image: shravanvm/devops-frontend:latest
+    image: ${DOCKERHUB_USERNAME}/devops-frontend:latest
     container_name: frontend
     restart: always
     ports:
@@ -21,6 +19,42 @@ services:
       - backend
     networks:
       - appnet
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=7d'
+    networks:
+      - appnet
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - appnet
+
+volumes:
+  prometheus_data:
+  grafana_data:
 
 networks:
   appnet:
